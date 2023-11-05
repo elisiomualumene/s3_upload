@@ -6,19 +6,19 @@ import multer from "multer";
 import fs from "fs";
 import path from "path";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const app = express();
 
-const port = process.env.SERVER_PORT!;
+const port = process.env.SERVER_PORT;
 
 app.use(json());
 app.use(cors());
 
-const aws_upload_url = process.env.AWS_UPLOAD_URL!;
+const aws_upload_url = process.env.AWS_UPLOAD_URL;
 
 const client = new S3({
-  region: process.env.AWS_REGION!,
+  region: process.env.AWS_REGION,
   credentials: {
     accessKeyId: process.env.AWS_PUBLIC_KEY!,
     secretAccessKey: process.env.AWS_PRIVATE_KEY!,
@@ -44,7 +44,7 @@ app.post("/upload", uploader.single("file"), async (req, res) => {
     const content = fs.readFileSync(file?.path);
 
     const setupFile = new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_SET!,
+      Bucket: process.env.AWS_BUCKET_SET,
       Key: `${file?.filename}.${file.mimetype.split("/")[1]}`,
       Body: content,
       ContentType: file?.mimetype,
