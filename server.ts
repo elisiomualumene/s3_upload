@@ -48,7 +48,7 @@ app.post("/upload", uploader.single("file"), async (req, res) => {
       Key: `${file?.filename}.${file.mimetype.split("/")[1]}`,
       Body: content,
       ContentType: file?.mimetype,
-      ACL: "public-read",
+      ACL: "public-read-write",
     });
 
     const uploaded = await client.send(setupFile);
@@ -71,8 +71,9 @@ app.post("/upload", uploader.single("file"), async (req, res) => {
       if (err) {
         console.log(err.message);
       }
-      console.log("temporary file was succeffuly unlinked");
+      console.log("[ALERT] temporary file was successfuly unlinked");
     });
+
     return res.status(200).json(FileResponse);
   } catch (err) {
     console.log(err);
@@ -83,5 +84,5 @@ app.post("/upload", uploader.single("file"), async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port  [${port}]`);
+  console.log(`[SERVER] Server is running on http://localhost:${port}`);
 });
