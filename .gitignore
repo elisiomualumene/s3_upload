@@ -1,7 +1,7 @@
 node_modules
 build
-.env
 
 yarn-error.log
-
+trunk
+upload
 package-lock.json

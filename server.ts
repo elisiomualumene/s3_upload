@@ -6,7 +6,7 @@ import multer from "multer";
 import fs from "fs";
 import path from "path";
 
-dotenv.config({ path: path.resolve(__dirname, ".env") });
+dotenv.config();
 
 const app = express();
 
@@ -15,10 +15,8 @@ const port = process.env.SERVER_PORT;
 app.use(json());
 app.use(cors());
 
-const aws_upload_url = process.env.AWS_UPLOAD_URL;
-
 const client = new S3({
-  region: process.env.AWS_REGION,
+  region: process.env.AWS_REGION!,
   credentials: {
     accessKeyId: process.env.AWS_PUBLIC_KEY!,
     secretAccessKey: process.env.AWS_PRIVATE_KEY!,
@@ -27,12 +25,8 @@ const client = new S3({
 
 const uploader = multer({ dest: "upload/" });
 
-app.get("/", (_req, res) => {
-  const file = path.resolve(__dirname, "index.html");
-  return res.sendFile(file);
-});
 
-app.post("/upload", uploader.single("file"), async (req, res) => {
+app.post("/", uploader.single("file"), async (req, res) => {
   try {
     const file = req.file;
 
@@ -41,14 +35,15 @@ app.post("/upload", uploader.single("file"), async (req, res) => {
       return;
     }
 
+    const s3key = `${file.filename}.${file.mimetype.split("/")[1]}`;
+
     const content = fs.readFileSync(file?.path);
 
     const setupFile = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_SET,
-      Key: `${file?.filename}.${file.mimetype.split("/")[1]}`,
+      Key: s3key,
       Body: content,
       ContentType: file?.mimetype,
-      ACL: "public-read-write",
     });
 
     const uploaded = await client.send(setupFile);
@@ -56,12 +51,10 @@ app.post("/upload", uploader.single("file"), async (req, res) => {
     const FileResponse = {
       status: uploaded.$metadata.httpStatusCode,
       message: "the file was uploaded",
-      file: {
-        host: "AWS",
-        link: `${aws_upload_url}${file.filename}.${
-          file.mimetype.split("/")[1]
-        }`,
-      },
+      host: "AWS",
+      secure_url: `https://${process.env
+        .AWS_BUCKET_SET!}.s3.amazonaws.com/${s3key}`,
+      uri: `s3://${process.env.AWS_BUCKET_SET!}/${s3key}`,
       metadata: {
         delay: uploaded.$metadata.totalRetryDelay,
       },
@@ -83,6 +76,6 @@ app.post("/upload", uploader.single("file"), async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`[SERVER] Server is running on http://localhost:${port}`);
+app.listen(Number(port), () => {
+  console.log(`[SERVER] Server is running on http://localhost:${Number(port)}`);
 });
